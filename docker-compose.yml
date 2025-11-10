@@ -1,0 +1,81 @@
+version: '3.9'
+services:
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - user-service
+      - email-service
+      - push-service
+      - template-service
+    networks:
+      - dns_net
+
+  user-service:
+    build: ./services/user-service
+    env_file:
+      - .env
+    networks:
+      - dns_net
+
+  email-service:
+    build: ./services/email-service
+    env_file:
+      - .env
+    networks:
+      - dns_net
+
+  push-service:
+    build: ./services/push-service
+    env_file:
+      - .env
+    networks:
+      - dns_net
+
+  template-service:
+    build: ./services/template-service
+    env_file:
+      - .env
+    networks:
+      - dns_net
+
+# infra
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - dns_net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - dns_net
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - dns_net
+
+networks:
+  dns_net:
+    driver: bridge
+
+volumes:
+  pgdata:
