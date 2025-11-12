@@ -1,2 +1,231 @@
+# Comprehensive .gitignore for a Python project (with common extras)
+
+# Byte-compiled / optimized / generated
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# C extensions and compiled objects
+*.so
+*.dll
+*.dylib
+*.o
+*.obj
+*.exe
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+venv.bak/
+venv-*/
+
+# PEP 582 (python local packages)
+__pypackages__/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.installed.cfg
+pip-wheel-metadata/
+wheels/
+share/python-wheels/
+*.whl
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.pytest_cache/
+.pytest_cache/*
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+htmlcov/
+nosetests.xml
+test-results/
+
+# MyPy, Pyright, Pyre, Ruff, Flake caches
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+.mypy_cache/
+
+# Type stub and stubs cache
+*.pyi
+
+# Jupyter Notebook
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# IDEs and editors
+.vscode/
+.vscode-test/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.komodoproject
+*.tmproj
+*.esproj
+*.project
+.pydevproject
+.ropeproject/
+*.swo
+*.swp
+*~
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.*.swp
+
+# Logs and runtime files
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+# Environment and secrets
 .env
+.env.local
+.env.*.local
+.envrc
+.local.env
+credentials
+*.key
+*.pem
+secrets.yml
+
+# Python environment managers
+.python-version
+.pipenv/
+Pipfile.lock
+poetry.lock
+poetry.toml
+.venv/
+
+# Virtualenv and build tool artifacts
+tox/
+.tox/
+.nox/
+.coverage
+htmlcov/
+.cache/
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+static/
+
+# Flask
+instance/
+.webassets-cache
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Sphinx docs
+docs/_build/
+build/docs/
+
+# Documentation generators
+.site
+/.page_cache
+
+# IDE JetBrains caches
+.idea/
+*.iml
+out/
+
+# Node / JavaScript (if present in monorepos)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+.next/
+.nuxt/
+.out/
+dist/
+.cache/
+.eslintcache
+parcel-cache/
+.vite/
+
+# Frontend build artifacts
+public/build/
+build/
+
+# OS generated files and thumbnails
+*.stackdump
+*.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+docker-compose.override.yml
+docker-compose.*.yml
+.env.docker
+
+# Kubernetes / helm
+*.kube/
+.kube/
+helm-debug.log
+
+# Cloud provider credentials and SDK caches
+.aws/
+.aws-credentials
+.gcloud/
+.azure/
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+
+# Editor backup files
+*~
+*.bak
+*.orig
+*.rej
+
+# Misc
+coverage/
+coverage.*
+profiler/
+profiling/
+*.cover
+*.coverage
+
+# Keep migrations/versions python files tracked but ignore pyc/temp files
+migrations/versions/*.pyc
+migrations/versions/*~
+
+# Local project-specific files (uncomment if you want to ignore)
+# .vscode/settings.json
+# local_settings.py
+
+# End of file
