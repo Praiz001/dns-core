@@ -1,9 +1,0 @@
-{
-  "name": "distributed-notification-system",
-  "private": true,
-  "workspaces": [
-    "services/*",
-    "shared/*"
-  ],
-  "scripts": {}
-}
