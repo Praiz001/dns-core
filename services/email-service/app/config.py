@@ -4,7 +4,7 @@ Configuration management using Pydantic Settings.
 Loads configuration from environment variables with validation.
 """
 
-from typing import List
+from typing import List, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import PostgresDsn, RedisDsn, field_validator
 
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     SERVICE_NAME: str = "email-service"
     LOG_LEVEL: str = "INFO"
-    CORS_ORIGINS: List[str] = ["*"]
+    CORS_ORIGINS: Union[List[str], str] = "*"
     
     # Database
     DATABASE_URL: PostgresDsn
@@ -78,11 +78,15 @@ class Settings(BaseSettings):
     
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v):
+    def parse_cors_origins(cls, v) -> List[str]:
         """Parse CORS origins from comma-separated string."""
+        if v is None or v == "":
+            return ["*"]
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
-        return v
+        if isinstance(v, list):
+            return v
+        return ["*"]
 
 
 # Global settings instance
