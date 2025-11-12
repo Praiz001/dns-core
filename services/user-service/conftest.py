@@ -1,6 +1,7 @@
 """
 Pytest configuration and fixtures
 """
+
 import os
 import sys
 from pathlib import Path
@@ -11,11 +12,13 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 # Override any external DJANGO_SETTINGS_MODULE
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'user_service.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "user_service.settings")
+
+from django.contrib.auth import get_user_model
+
+from rest_framework.test import APIClient
 
 import pytest
-from rest_framework.test import APIClient
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -30,33 +33,31 @@ def api_client():
 def user_data():
     """Sample user data for testing"""
     return {
-        'name': 'Test User',
-        'email': 'test@example.com',
-        'password': 'TestPass123!',
-        'preferences': {
-            'email': True,
-            'push': True
-        }
+        "name": "Test User",
+        "email": "test@example.com",
+        "password": "TestPass123!",
+        "preferences": {"email": True, "push": True},
     }
 
 
 @pytest.fixture
 def create_user(db, user_data):
     """Factory fixture to create a user"""
+
     def _create_user(**kwargs):
         data = user_data.copy()
         data.update(kwargs)
-        preferences = data.pop('preferences', None)
-        
+        preferences = data.pop("preferences", None)
+
         user = User.objects.create_user(**data)
-        
+
         if preferences and user.preferences:
             for key, value in preferences.items():
                 setattr(user.preferences, key, value)
             user.preferences.save()
-        
+
         return user
-    
+
     return _create_user
 
 
