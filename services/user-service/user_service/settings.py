@@ -3,9 +3,8 @@ Django settings for user_service project.
 """
 
 import os
-from datetime import timedelta
 from pathlib import Path
-
+from datetime import timedelta
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -120,10 +119,12 @@ if REDIS_URL:
     }
 elif REDIS_HOST:
     # Redis cache for production (host-based config)
+    redis_port = config("REDIS_PORT", default="6379")
+    redis_db = config("REDIS_DB", default="0")
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": f"redis://{REDIS_HOST}:{config('REDIS_PORT', default='6379')}/{config('REDIS_DB', default='0')}",
+            "LOCATION": f"redis://{REDIS_HOST}:{redis_port}/{redis_db}",
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 "CONNECTION_POOL_KWARGS": {"max_connections": 50},

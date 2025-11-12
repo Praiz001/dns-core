@@ -3,21 +3,19 @@ Test script to verify Redis and RabbitMQ connections
 Run this with: python test_connections.py
 """
 
+import json
 import os
 import sys
 
 import django
+import pika
 
 # Setup Django
 os.environ["DJANGO_SETTINGS_MODULE"] = "user_service.settings"
 django.setup()
 
-import json
-
-from django.conf import settings
-from django.core.cache import cache
-
-import pika
+from django.conf import settings  # noqa: E402
+from django.core.cache import cache  # noqa: E402
 
 
 def test_redis():

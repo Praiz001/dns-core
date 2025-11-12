@@ -6,27 +6,22 @@ import json
 import logging
 import secrets
 import uuid
-from datetime import timedelta
 
+import pika
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
-
-import pika
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .decorators import idempotent_request
-from .models import IdempotencyKey, User
+from .models import User
 from .response_utils import ApiResponse
 from .serializers import (
     EmailVerificationSerializer,
@@ -445,7 +440,11 @@ class TestNotificationPublishView(APIView):
     authentication_classes = []
 
     @swagger_auto_schema(
-        operation_description="Publish a test notification message to RabbitMQ. If authenticated, uses your user id; if not, provide user_id in the body. In production, this endpoint may be disabled by ALLOW_TEST_NOTIFICATION_ENDPOINT.",
+        operation_description=(
+            "Publish a test notification message to RabbitMQ. "
+            "If authenticated, uses your user id; if not, provide user_id in the body. "
+            "In production, this endpoint may be disabled by ALLOW_TEST_NOTIFICATION_ENDPOINT."
+        ),
         request_body=NotificationTestRequestSerializer,
         consumes=["application/json"],
         responses={

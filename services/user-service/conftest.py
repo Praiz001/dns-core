@@ -6,19 +6,22 @@ import os
 import sys
 from pathlib import Path
 
+import pytest
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+
 # Add project root to Python path
 project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 # Override any external DJANGO_SETTINGS_MODULE
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "user_service.settings")
+os.environ["DJANGO_SETTINGS_MODULE"] = "user_service.settings"
 
-from django.contrib.auth import get_user_model
+# Import Django and setup
+import django  # noqa: E402
 
-from rest_framework.test import APIClient
-
-import pytest
+django.setup()
 
 User = get_user_model()
 

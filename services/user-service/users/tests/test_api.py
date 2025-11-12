@@ -2,11 +2,9 @@
 Integration tests for user API endpoints
 """
 
-from django.urls import reverse
-
-from rest_framework import status
-
 import pytest
+from django.urls import reverse
+from rest_framework import status
 
 pytestmark = pytest.mark.django_db
 
@@ -62,7 +60,7 @@ class TestUserLogin:
 
     def test_login_success(self, api_client, create_user):
         """Test successful login"""
-        user = create_user(email="test@example.com", password="TestPass123!")
+        create_user(email="test@example.com", password="TestPass123!")
 
         url = reverse("users:auth-login")
         response = api_client.post(url, {"email": "test@example.com", "password": "TestPass123!"}, format="json")

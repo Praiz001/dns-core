@@ -3,15 +3,12 @@ RabbitMQ consumer for handling notification requests
 """
 
 import json
+import pika
 import logging
 import time
-
 from django.conf import settings
 from django.core.cache import cache
-
-import pika
 from pybreaker import CircuitBreaker, CircuitBreakerError
-
 from .models import User
 from .serializers import UserPreferenceSerializer
 
@@ -119,7 +116,7 @@ class RabbitMQConsumer:
             user_id = message.get("user_id")
 
             logger.info(
-                f"Processing notification message",
+                "Processing notification message",
                 extra={
                     "request_id": request_id,
                     "user_id": user_id,
@@ -150,20 +147,10 @@ class RabbitMQConsumer:
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 return
 
-            # Merge user data with message variables
-            enhanced_message = {
-                **message,
-                "user_data": user_data,
-                "variables": {
-                    **message.get("variables", {}),
-                    "name": user_data["name"],
-                },
-            }
-
             # TODO: Forward to push service or process here
-            # For now, just log the enhanced message
+            # For now, just log the notification details
             logger.info(
-                f"Enhanced message prepared for push service",
+                "Push notification ready for delivery",
                 extra={
                     "request_id": request_id,
                     "user_id": user_id,
@@ -194,7 +181,7 @@ class RabbitMQConsumer:
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
             else:
                 # Max retries exceeded, move to dead letter queue
-                logger.error(f"Max retries exceeded, rejecting message")
+                logger.error("Max retries exceeded, rejecting message")
                 ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
                 self.retry_count = 0
 
