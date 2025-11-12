@@ -1,54 +1,56 @@
-version: '3.9'
 services:
   api-gateway:
     build: ./services/api-gateway
     ports:
-      - "8000:8000"
+      - "3000:3000"
     env_file:
-      - .env
+      - ./services/api-gateway/.env
     depends_on:
-      - user-service
-      - email-service
-      - push-service
-      - template-service
+      - rabbitmq
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=dev
+      - PORT=3000
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=notification_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     networks:
       - dns_net
 
-  user-service:
-    build: ./services/user-service
-    env_file:
-      - .env
-    networks:
-      - dns_net
+  # user-service:
+  #   build: ./services/user-service
+  #   networks:
+  #     - dns_net
 
-  email-service:
-    build: ./services/email-service
-    env_file:
-      - .env
-    networks:
-      - dns_net
+  # email-service:
+  #   build: ./services/email-service
+  #   networks:
+  #     - dns_net
 
-  push-service:
-    build: ./services/push-service
-    env_file:
-      - .env
-    networks:
-      - dns_net
+  # push-service:
+  #   build: ./services/push-service
+  #   networks:
+  #     - dns_net
 
-  template-service:
-    build: ./services/template-service
-    env_file:
-      - .env
-    networks:
-      - dns_net
+  # template-service:
+  #   build: ./services/template-service
+  #   networks:
+  #     - dns_net
 
-# infra
+  # infra
   postgres:
     image: postgres:15
     container_name: postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: notification_db
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
