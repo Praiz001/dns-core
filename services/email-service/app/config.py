@@ -6,7 +6,7 @@ Loads configuration from environment variables with validation.
 
 from typing import List, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import PostgresDsn, RedisDsn, field_validator
+from pydantic import PostgresDsn, field_validator
 
 
 class Settings(BaseSettings):
@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     SERVICE_NAME: str = "email-service"
     LOG_LEVEL: str = "INFO"
     CORS_ORIGINS: Union[List[str], str] = "*"
+    PORT: int = 8003
     
     # Database
     DATABASE_URL: PostgresDsn
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     DB_ECHO: bool = False
     
     # Redis
-    REDIS_URL: RedisDsn
+    REDIS_URL: str
     CACHE_TTL: int = 300  # 5 minutes
     
     # RabbitMQ
