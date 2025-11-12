@@ -24,29 +24,46 @@ Push notification microservice for the Distributed Notification System. Handles 
 
 ## Setup
 
-### 1. Install Dependencies
+### Option 1: Using UV (Recommended - 10-100x faster)
 
 ```bash
-pip install -r requirements.txt
+# Install UV (if not already installed)
+# Windows PowerShell:
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Install dependencies
+uv sync
+
+# Run migrations
+uv run alembic upgrade head
+
+# Start service
+uv run uvicorn app.main:app --reload --port 8004
 ```
 
-### 2. Configure Environment
+See [UV_GUIDE.md](UV_GUIDE.md) for more details.
+
+### Option 2: Using pip
+
+```bash
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
+alembic upgrade head
+
+# Start service
+uvicorn app.main:app --reload --port 8004
+```
+### Configure Environment
 
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
-```
-
-### 3. Run Database Migrations
-
-```bash
-alembic upgrade head
-```
-
-### 4. Start Service
-
-```bash
-uvicorn app.main:app --reload --port 8004
 ```
 
 ## API Endpoints
@@ -75,6 +92,16 @@ See `.env.example` for all configuration options.
 
 ## Testing
 
+### Using UV (Recommended)
+```bash
+# Run unit tests
+uv run pytest tests/unit/ -v
+
+# Run with coverage
+uv run pytest tests/unit/ --cov=app --cov-report=html
+```
+
+### Using pip
 ```bash
 # Run unit tests
 pytest tests/unit/ -v
