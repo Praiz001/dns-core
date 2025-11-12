@@ -2,13 +2,12 @@
 Pytest configuration and fixtures
 """
 
+# isort: skip_file
+# Imports must be in specific order for Django setup
+
 import os
 import sys
 from pathlib import Path
-
-import pytest
-from django.contrib.auth import get_user_model
-from rest_framework.test import APIClient
 
 # Add project root to Python path
 project_root = Path(__file__).parent
@@ -22,6 +21,11 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "user_service.settings"
 import django  # noqa: E402
 
 django.setup()
+
+# Import Django and testing modules after setup
+import pytest  # noqa: E402
+from django.contrib.auth import get_user_model  # noqa: E402
+from rest_framework.test import APIClient  # noqa: E402
 
 User = get_user_model()
 

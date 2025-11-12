@@ -3,12 +3,15 @@ RabbitMQ consumer for handling notification requests
 """
 
 import json
-import pika
 import logging
 import time
+
 from django.conf import settings
 from django.core.cache import cache
+
+import pika
 from pybreaker import CircuitBreaker, CircuitBreakerError
+
 from .models import User
 from .serializers import UserPreferenceSerializer
 

@@ -7,18 +7,20 @@ import logging
 import secrets
 import uuid
 
-import pika
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
+
+import pika
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .models import User
