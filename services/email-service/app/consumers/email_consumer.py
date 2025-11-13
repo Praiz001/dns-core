@@ -55,14 +55,12 @@ class EmailConsumer:
             self.channel = await self.connection.channel()
             await self.channel.set_qos(prefetch_count=settings.RABBITMQ_PREFETCH_COUNT)
             
-            # Declare the email queue
+            # Declare the email queue (without DLX to avoid conflicts with existing queue)
+            # If queue already exists, this will just connect to it
             self.queue = await self.channel.declare_queue(
                 settings.RABBITMQ_EMAIL_QUEUE,
                 durable=True,
-                arguments={
-                    "x-dead-letter-exchange": "",
-                    "x-dead-letter-routing-key": settings.RABBITMQ_DLQ
-                }
+                passive=False  # Create if doesn't exist, use existing if it does
             )
             
             logger.info(f"Connected to RabbitMQ and listening on queue: {settings.RABBITMQ_EMAIL_QUEUE}")
