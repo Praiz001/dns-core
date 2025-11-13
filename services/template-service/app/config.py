@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
-from typing import List
+from pydantic import field_validator
+from typing import List, Union
 
 
 class Settings(BaseSettings):
@@ -12,7 +13,7 @@ class Settings(BaseSettings):
     
     # Server
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 8002
     
     # Database
     database_url: str
@@ -22,10 +23,24 @@ class Settings(BaseSettings):
     redis_ttl: int = 3600  # 1 hour cache
     
     # CORS
-    cors_origins: List[str] = ["*"]
+    cors_origins: Union[List[str], str] = "*"
     
     # Logging
     log_level: str = "INFO"
+    
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v) -> List[str]:
+        """Parse CORS origins from comma-separated string or list."""
+        if v is None or v == "":
+            return ["*"]
+        if isinstance(v, str):
+            if v == "*":
+                return ["*"]
+            return [origin.strip() for origin in v.split(",")]
+        if isinstance(v, list):
+            return v
+        return ["*"]
     
     class Config:
         env_file = ".env"
