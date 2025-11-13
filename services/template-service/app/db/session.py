@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from typing import AsyncGenerator
 from app.config import settings
 
-# Create async engine
+# Create async engine with pgbouncer compatibility
 engine = create_async_engine(
     settings.database_url,
     echo=settings.environment == "development",
@@ -9,6 +10,10 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
+    connect_args={
+        "prepared_statement_cache_size": 0,  # Required for pgbouncer session pooling
+        "statement_cache_size": 0
+    }
 )
 
 # Create async session factory
@@ -21,7 +26,7 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Dependency for getting database session"""
     async with AsyncSessionLocal() as session:
         try:
