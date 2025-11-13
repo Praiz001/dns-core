@@ -9,6 +9,10 @@ services:
       - rabbitmq
       - postgres
       - redis
+      - user-service
+      - email-service
+      - push-service
+      - template-service
     environment:
       - NODE_ENV=dev
       - PORT=3000
@@ -20,28 +24,134 @@ services:
       - DB_NAME=notification_db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - USER_SERVICE_URL=http://user-service:8001
+      - EMAIL_SERVICE_URL=http://email-service:8003
+      - PUSH_SERVICE_URL=http://push-service:8005
+      - TEMPLATE_SERVICE_URL=http://template-service:8002
     networks:
       - dns_net
 
-  # user-service:
-  #   build: ./services/user-service
-  #   networks:
-  #     - dns_net
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    environment:
+      - SECRET_KEY=your-secret-key-here-change-in-production
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - DB_NAME=notification_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_CACHE_TTL=3600
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_QUEUE_PUSH=push.queue
+      - RABBITMQ_EXCHANGE=notifications.direct
+      - JWT_ACCESS_TOKEN_LIFETIME=60
+      - JWT_REFRESH_TOKEN_LIFETIME=1440
+      - LOG_LEVEL=INFO
+    networks:
+      - dns_net
 
-  # email-service:
-  #   build: ./services/email-service
-  #   networks:
-  #     - dns_net
+  email-service:
+    build: ./services/email-service
+    ports:
+      - "8003:8003"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - template-service
+    environment:
+      - ENVIRONMENT=development
+      - SERVICE_NAME=email-service
+      - LOG_LEVEL=INFO
+      - CORS_ORIGINS=*
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/notification_db
+      - DB_POOL_SIZE=10
+      - DB_MAX_OVERFLOW=20
+      - DB_ECHO=false
+      - REDIS_URL=redis://redis:6379/0
+      - CACHE_TTL=300
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_EMAIL_QUEUE=email.queue
+      - RABBITMQ_DLQ=failed.email.dlq
+      - RABBITMQ_PREFETCH_COUNT=10
+      - RABBITMQ_RETRY_DELAY=5000
+      - USER_SERVICE_URL=http://user-service:8000
+      - TEMPLATE_SERVICE_URL=http://template-service:8002
+      - API_GATEWAY_URL=http://api-gateway:3000
+      - PORT=8003
+    env_file:
+      - ./services/email-service/.env
+    networks:
+      - dns_net
 
-  # push-service:
-  #   build: ./services/push-service
-  #   networks:
-  #     - dns_net
+  push-service:
+    build: ./services/push-service
+    ports:
+      - "8005:8005"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - template-service
+      - user-service
+    environment:
+      - SERVICE_NAME=push-service
+      - SERVICE_VERSION=1.0.0
+      - DEBUG=False
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/notification_db
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_QUEUE=push.queue
+      - RABBITMQ_EXCHANGE=notifications.direct
+      - RABBITMQ_ROUTING_KEY=push
+      - RABBITMQ_DLX_EXCHANGE=notifications.dlx
+      - RABBITMQ_DLX_ROUTING_KEY=failed.push
+      - RABBITMQ_PREFETCH_COUNT=10
+      - USER_SERVICE_URL=http://user-service:8000
+      - TEMPLATE_SERVICE_URL=http://template-service:8002
+      - API_GATEWAY_URL=http://api-gateway:3000
+      - REDIS_URL=redis://redis:6379/0
+      - PORT=8005
+    env_file:
+      - ./services/push-service/.env
+    networks:
+      - dns_net
 
-  # template-service:
-  #   build: ./services/template-service
-  #   networks:
-  #     - dns_net
+  template-service:
+    build: ./services/template-service
+    ports:
+      - "8002:8002"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - APP_NAME=template-service
+      - APP_VERSION=1.0.0
+      - ENVIRONMENT=development
+      - HOST=0.0.0.0
+      - PORT=8002
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/notification_db
+      - REDIS_URL=redis://redis:6379/0
+      - REDIS_TTL=3600
+      - CORS_ORIGINS=*
+      - LOG_LEVEL=INFO
+    networks:
+      - dns_net
 
   # infra
   postgres:
