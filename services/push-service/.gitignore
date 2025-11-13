@@ -38,6 +38,11 @@ uv.lock
 .env
 .env.local
 
+# Firebase Service Account (NEVER commit this!)
+*firebase*.json
+*adminsdk*.json
+service-account*.json
+
 # IDE
 .vscode/
 .idea/

@@ -1,6 +1,6 @@
 """Application Configuration"""
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 
@@ -29,7 +29,12 @@ class Settings(BaseSettings):
     TEMPLATE_SERVICE_URL: str = "http://localhost:8002"
     API_GATEWAY_URL: str = "http://localhost:3000"
     
-    # Push Provider Configuration
+    # Push Provider Configuration 
+    GOOGLE_APPLICATION_CREDENTIALS: Optional[str] = None
+    FCM_PROJECT_ID: Optional[str] = None
+    FCM_V1_API_URL: str = "https://fcm.googleapis.com/v1/projects/{project_id}/messages:send"
+    
+    # Legacy API (Deprecated - use HTTP v1 instead)
     FCM_SERVER_KEY: Optional[str] = None
     FCM_API_URL: str = "https://fcm.googleapis.com/fcm/send"
     
@@ -54,9 +59,11 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="allow"
+    )
 
 
 settings = Settings()

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
 from app.config import settings
-from app.api.v1.routes import health
+from app.api.v1.routes import health, push
 from app.consumers.push_consumer import start_consumer
 from app.utils.logger import get_logger
 from app.utils.database import init_db
@@ -29,6 +29,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router, prefix="/api/v1", tags=["Health"])
+app.include_router(push.router, prefix="/api/v1/push", tags=["Push Notifications"])
 
 
 @app.on_event("startup")

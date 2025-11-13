@@ -53,3 +53,46 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
     dependencies: Dict[str, str]
+
+
+class PushNotificationRequest(BaseModel):
+    """Request schema for sending push notification"""
+    user_id: str = Field(..., description="Target user ID")
+    title: str = Field(..., description="Notification title")
+    body: str = Field(..., description="Notification body/message")
+    data: Optional[Dict[str, Any]] = Field(None, description="Custom data payload")
+    priority: Optional[str] = Field("normal", description="Priority: normal or high")
+    badge: Optional[int] = Field(None, description="Badge count for iOS")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "user-123",
+                "title": "New Message",
+                "body": "You have a new message!",
+                "data": {"action": "open_chat", "chat_id": "456"},
+                "priority": "high",
+                "badge": 1
+            }
+        }
+
+
+class PushNotificationResponse(BaseModel):
+    """Response schema for push notification"""
+    message_id: str = Field(..., description="Unique message identifier")
+    status: str = Field(..., description="Status: queued, sent, delivered, failed")
+    message: str = Field(..., description="Response message")
+
+
+class DeliveryStatusResponse(BaseModel):
+    """Response schema for delivery status"""
+    message_id: str
+    user_id: str
+    status: str
+    sent_at: Optional[datetime] = None
+    delivered_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    provider: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
