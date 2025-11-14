@@ -15,6 +15,7 @@ from .views import (
     UserProfileView,
     UserRegistrationView,
 )
+from .internal_views import InternalUserPreferenceView
 
 app_name = "users"
 
@@ -23,6 +24,8 @@ urlpatterns = [
     path("users/", UserRegistrationView.as_view(), name="user-register"),
     path("users/profile/", UserProfileView.as_view(), name="user-profile"),
     path("users/preferences/", UserPreferenceView.as_view(), name="user-preferences"),
+    
+    path("users/<uuid:user_id>/preferences/", InternalUserPreferenceView.as_view(), name="internal-user-preferences"),
     # Authentication
     path("auth/login/", LoginView.as_view(), name="auth-login"),
     # path('auth/refresh/', TokenRefreshView.as_view(), name='auth-refresh'),  # Removed refresh token endpoint
