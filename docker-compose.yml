@@ -4,7 +4,7 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./services/api-gateway/.env
+      - ./services/api-gateway/.env.docker
     depends_on:
       - rabbitmq
       - postgres
@@ -21,7 +21,7 @@ services:
     ports:
       - "8001:8000"
     env_file:
-    - ./services/user-service/.env
+      - ./services/user-service/.env
     depends_on:
       - postgres-user
       - redis
@@ -34,7 +34,7 @@ services:
     ports:
       - "8003:8003"
     env_file:
-    - ./services/email-service/.env
+      - ./services/email-service/.env
     depends_on:
       - postgres
       - redis
@@ -48,7 +48,7 @@ services:
     ports:
       - "8005:8005"
     env_file:
-    - ./services/push-service/.env
+      - ./services/push-service/.env
     depends_on:
       - postgres
       - redis
@@ -63,7 +63,7 @@ services:
     ports:
       - "8002:8002"
     env_file:
-    - ./services/template-service/.env
+      - ./services/template-service/.env
     depends_on:
       - postgres
       - redis
