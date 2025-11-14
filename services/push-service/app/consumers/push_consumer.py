@@ -54,10 +54,7 @@ class PushConsumer:
             queue = await self.channel.declare_queue(
                 settings.RABBITMQ_QUEUE,
                 durable=True,
-                arguments={
-                    "x-dead-letter-exchange": settings.RABBITMQ_DLX_EXCHANGE,
-                    "x-dead-letter-routing-key": settings.RABBITMQ_DLX_ROUTING_KEY
-                }
+                passive=True
             )
             
             logger.info(f"Started consuming from {settings.RABBITMQ_QUEUE}")

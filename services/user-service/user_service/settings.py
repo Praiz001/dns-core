@@ -208,8 +208,18 @@ SWAGGER_SETTINGS = {
     },
 }
 
-# CORS
-CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="http://localhost:3000").split(",")
+# # CORS
+# CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="http://localhost:3000").split(",")
+# CORS_ALLOW_CREDENTIALS = True
+
+# For development: allow all origins
+CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=True, cast=bool)
+
+# For production: specify allowed origins
+if not CORS_ALLOW_ALL_ORIGINS:
+    cors_origins = config("CORS_ALLOWED_ORIGINS", default="http://localhost:3000")
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(",")]
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 # RabbitMQ Configuration

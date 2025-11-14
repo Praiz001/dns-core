@@ -7,12 +7,19 @@ import logging
 import secrets
 import uuid
 
+from django.core.cache import cache
+from rest_framework import status
+from rest_framework.views import APIView
+from .models import User, UserPreference
+from .response_utils import ApiResponse
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+
 
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -558,4 +565,116 @@ class TestNotificationPublishView(APIView):
             logger.error(f"Failed to publish test notification: {e}", exc_info=True)
             return ApiResponse.error(
                 error=str(e), message="Publish failed", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UserPreferenceByIdView(APIView):
+    """
+    Get user preferences by user ID (for internal service-to-service calls)
+    No authentication required - intended for internal service-to-service communication
+    
+    TODO: In production, consider implementing API key or service token validation
+    """
+    authentication_classes = []  # Disable authentication
+    permission_classes = []      # Disable permission checks
+    
+    def get(self, request, user_id):
+        """Get user preferences by user ID"""
+        try:
+            cache_key = f"user_preferences:{user_id}"
+            cached_prefs = cache.get(cache_key)
+            
+            if cached_prefs:
+                logger.info(f"Preferences cache hit for user: {user_id}")
+                return ApiResponse.success(
+                    data=cached_prefs,
+                    message="Preferences retrieved from cache"
+                )
+            
+            # Fetch from database
+            user = User.objects.select_related('preferences').get(id=user_id)
+            
+            if not user.preferences:
+                # Create default preferences if they don't exist
+                user.preferences = UserPreference.objects.create()
+                user.save(update_fields=['preferences'])
+            
+            from .serializers import UserPreferenceSerializer
+            prefs_data = UserPreferenceSerializer(user.preferences).data
+            
+            # Cache for 1 hour
+            cache.set(cache_key, prefs_data, 3600)
+            
+            logger.info(f"Preferences retrieved for user: {user_id}")
+            return ApiResponse.success(
+                data=prefs_data,
+                message="Preferences retrieved successfully"
+            )
+            
+        except User.DoesNotExist:
+            logger.warning(f"User not found: {user_id}")
+            return ApiResponse.error(
+                error="User not found",
+                message="Failed to retrieve preferences",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error retrieving preferences for user {user_id}: {str(e)}")
+            return ApiResponse.error(
+                error=str(e),
+                message="Failed to retrieve preferences",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class _UserPreferenceByIdView(APIView):
+    """
+    Get user preferences by user ID (for internal service-to-service calls)
+    """
+    
+    def get(self, request, user_id):
+        """Get user preferences by user ID"""
+        try:
+            cache_key = f"user_preferences:{user_id}"
+            cached_prefs = cache.get(cache_key)
+            
+            if cached_prefs:
+                logger.info(f"Preferences cache hit for user: {user_id}")
+                return ApiResponse.success(
+                    data=cached_prefs,
+                    message="Preferences retrieved from cache"
+                )
+            
+            # Fetch from database
+            user = User.objects.select_related('preferences').get(id=user_id)
+            
+            if not user.preferences:
+                # Create default preferences if they don't exist
+                user.preferences = UserPreference.objects.create()
+                user.save(update_fields=['preferences'])
+            
+            from .serializers import UserPreferenceSerializer
+            prefs_data = UserPreferenceSerializer(user.preferences).data
+            
+            # Cache for 1 hour
+            cache.set(cache_key, prefs_data, 3600)
+            
+            logger.info(f"Preferences retrieved for user: {user_id}")
+            return ApiResponse.success(
+                data=prefs_data,
+                message="Preferences retrieved successfully"
+            )
+            
+        except User.DoesNotExist:
+            logger.warning(f"User not found: {user_id}")
+            return ApiResponse.error(
+                error="User not found",
+                message="Failed to retrieve preferences",
+                status_code=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Error retrieving preferences for user {user_id}: {str(e)}")
+            return ApiResponse.error(
+                error=str(e),
+                message="Failed to retrieve preferences",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

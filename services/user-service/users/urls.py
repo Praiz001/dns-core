@@ -11,6 +11,7 @@ from .views import (
     PasswordResetConfirmView,
     PasswordResetRequestView,
     TestNotificationPublishView,
+    UserPreferenceByIdView,
     UserPreferenceView,
     UserProfileView,
     UserRegistrationView,
@@ -32,4 +33,5 @@ urlpatterns = [
     # Health check
     path("health/", HealthCheckView.as_view(), name="health-check"),
     path("notifications/test/", TestNotificationPublishView.as_view(), name="notifications-test"),
+     path("users/<uuid:user_id>/preferences/", UserPreferenceByIdView.as_view(), name="user-preferences-by-id"),
 ]

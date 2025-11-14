@@ -60,7 +60,7 @@ class EmailConsumer:
             self.queue = await self.channel.declare_queue(
                 settings.RABBITMQ_EMAIL_QUEUE,
                 durable=True,
-                passive=False  # Create if doesn't exist, use existing if it does
+                passive=True  # Use existing queue if it exists
             )
             
             logger.info(f"Connected to RabbitMQ and listening on queue: {settings.RABBITMQ_EMAIL_QUEUE}")
