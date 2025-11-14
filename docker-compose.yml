@@ -9,39 +9,66 @@ services:
       - rabbitmq
       - postgres
       - redis
-    environment:
-      - NODE_ENV=dev
-      - PORT=3000
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=notification_db
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - user-service
+      - email-service
+      - push-service
+      - template-service
     networks:
       - dns_net
 
-  # user-service:
-  #   build: ./services/user-service
-  #   networks:
-  #     - dns_net
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "8001:8000"
+    env_file:
+    - ./services/user-service/.env
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - dns_net
 
-  # email-service:
-  #   build: ./services/email-service
-  #   networks:
-  #     - dns_net
+  email-service:
+    build: ./services/email-service
+    ports:
+      - "8003:8003"
+    env_file:
+    - ./services/email-service/.env
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - template-service
+    networks:
+      - dns_net
 
-  # push-service:
-  #   build: ./services/push-service
-  #   networks:
-  #     - dns_net
+  push-service:
+    build: ./services/push-service
+    ports:
+      - "8005:8005"
+    env_file:
+    - ./services/push-service/.env
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - template-service
+      - user-service
+    networks:
+      - dns_net
 
-  # template-service:
-  #   build: ./services/template-service
-  #   networks:
-  #     - dns_net
+  template-service:
+    build: ./services/template-service
+    ports:
+      - "8002:8002"
+    env_file:
+    - ./services/template-service/.env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dns_net
 
   # infra
   postgres:

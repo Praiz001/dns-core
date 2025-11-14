@@ -19,18 +19,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
+# Create non-root user first
+RUN useradd -m -u 1000 appuser
 
-# Copy application code
-COPY . .
+# Copy Python dependencies from builder and set ownership
+COPY --from=builder --chown=appuser:appuser /root/.local /home/appuser/.local
+
+# Copy application code and set ownership
+COPY --chown=appuser:appuser . .
 
 # Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 USER appuser
 

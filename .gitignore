@@ -227,5 +227,7 @@ migrations/versions/*~
 # Local project-specific files (uncomment if you want to ignore)
 # .vscode/settings.json
 # local_settings.py
-
+# UV
+.uv/
+uv.lock
 # End of file
