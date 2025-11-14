@@ -227,6 +227,81 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /**
+   * Unified method to publish notifications
+   * Enforces correct message structure as per specification
+   */
+  async publishNotification(
+    notificationId: string,
+    dto: {
+      notification_type: 'email' | 'push';
+      request_id: string;
+      user_id: string;
+      template_code: string;
+      variables: {
+        name: string;
+        link: string;
+        meta?: Record<string, any>;
+      };
+      priority: number;
+      metadata?: Record<string, any>;
+    },
+  ): Promise<boolean> {
+    // Construct message matching specification exactly
+    const message = {
+      notification_id: notificationId,
+      request_id: dto.request_id,
+      user_id: dto.user_id,
+      channel: dto.notification_type,
+      template_code: dto.template_code,
+      variables: {
+        name: dto.variables.name,
+        link: dto.variables.link,
+        meta: dto.variables.meta,
+      },
+      priority: dto.priority,
+      metadata: dto.metadata || {},
+      created_at: new Date().toISOString(),
+    };
+
+    const routingKey = dto.notification_type; // 'email' or 'push'
+
+    try {
+      const messageBuffer = Buffer.from(JSON.stringify(message));
+      const published = await this.channel.publish(
+        this.config.exchange,
+        routingKey,
+        messageBuffer,
+        {
+          persistent: true,
+          priority: dto.priority,
+          correlationId: dto.request_id,
+          contentType: 'application/json',
+          messageId: notificationId,
+          timestamp: Date.now(),
+        },
+      );
+
+      if (published) {
+        this.logger.log(
+          `Published notification ${notificationId} to ${routingKey}.queue`,
+        );
+        return true;
+      } else {
+        this.logger.warn(
+          `Failed to publish notification ${notificationId} (buffer full)`,
+        );
+        return false;
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to publish notification ${notificationId}`,
+        error,
+      );
+      throw error;
+    }
+  }
+
   private generateMessageId(): string {
     return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }

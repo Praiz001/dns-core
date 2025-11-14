@@ -9,6 +9,7 @@ import {
 import { QueueService } from '../queue/queue.service';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { DataSource } from 'typeorm';
+import { Public } from '../common/decorators/public.decorator';
 
 @Controller('health')
 export class HealthController {
@@ -22,6 +23,7 @@ export class HealthController {
   ) {}
 
   @Get()
+  @Public()
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @HealthCheck()
   check() {

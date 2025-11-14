@@ -1,47 +1,73 @@
 import {
   Entity,
   Column,
-  PrimaryColumn,
+  PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import {
-  NotificationType,
-  NotificationStatus,
-} from '../dto/query-notifications.dto';
 
+/**
+ * Notification entity - matches specification exactly
+ * Stores notification records for tracking and status updates
+ */
 @Entity('notifications')
+@Index(['request_id'], { unique: true })
+@Index(['user_id'])
 @Index(['status'])
-@Index(['type'])
-@Index(['correlation_id'])
+@Index(['notification_type'])
 @Index(['created_at'])
 export class Notification {
-  @PrimaryColumn('uuid')
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'enum',
-    enum: NotificationType,
-  })
-  type: NotificationType;
-
-  @Column({
-    type: 'enum',
-    enum: NotificationStatus,
-    default: NotificationStatus.PENDING,
-  })
-  status: NotificationStatus;
+  @Column({ unique: true })
+  @Index()
+  request_id: string;
 
   @Column('uuid')
-  correlation_id: string;
+  @Index()
+  user_id: string;
+
+  @Column({
+    type: 'enum',
+    enum: ['email', 'push'],
+  })
+  notification_type: 'email' | 'push';
+
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'delivered', 'failed'],
+    default: 'pending',
+  })
+  @Index()
+  status: 'pending' | 'delivered' | 'failed';
+
+  @Column()
+  template_code: string;
+
+  @Column('jsonb')
+  variables: {
+    name: string;
+    link: string;
+    meta?: Record<string, any>;
+  };
+
+  @Column('int')
+  priority: number;
+
+  @Column('jsonb', { nullable: true })
+  metadata: Record<string, any>;
 
   @Column({ type: 'text', nullable: true })
-  error?: string;
+  error_message: string;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @Column({ type: 'timestamp', nullable: true })
+  sent_at: Date;
+
+  @CreateDateColumn()
   created_at: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn()
   updated_at: Date;
 }

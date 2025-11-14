@@ -7,10 +7,12 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { DatabaseModule } from './database/database.module';
 import { ServicesModule } from './services/services.module';
 import { HealthModule } from './health/health.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
     ConfigurationModule,
+    AuthModule,
     QueueModule,
     NotificationsModule,
     DatabaseModule,

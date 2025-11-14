@@ -1,6 +1,8 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { ResponseFormatInterceptor } from './common/interceptors/response-format.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -23,8 +25,12 @@ async function bootstrap() {
     }),
   );
 
-  // Apply standardized response format globally
-  app.useGlobalInterceptors(new ResponseInterceptor());
+  // Apply global exception filter for standardized error responses
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Apply standardized response format globally (snake_case compliant)
+  const reflector = app.get(Reflector);
+  app.useGlobalInterceptors(new ResponseFormatInterceptor());
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
