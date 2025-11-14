@@ -22,6 +22,7 @@ ENV/
 .venv/
 venv.bak/
 venv-*/
+.env.docker
 
 # PEP 582 (python local packages)
 __pypackages__/
