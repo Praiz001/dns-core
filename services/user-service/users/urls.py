@@ -4,6 +4,7 @@ URL routing for users app
 
 from django.urls import path
 
+from .internal_views import InternalUserPreferenceView
 from .views import (
     EmailVerificationView,
     HealthCheckView,
@@ -15,7 +16,6 @@ from .views import (
     UserProfileView,
     UserRegistrationView,
 )
-from .internal_views import InternalUserPreferenceView
 
 app_name = "users"
 
