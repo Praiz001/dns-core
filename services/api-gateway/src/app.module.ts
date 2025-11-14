@@ -7,6 +7,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { DatabaseModule } from './database/database.module';
 import { ServicesModule } from './services/services.module';
 import { HealthModule } from './health/health.module';
+import { LoggerModule } from './common/logger/logger.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { HealthModule } from './health/health.module';
     DatabaseModule,
     ServicesModule,
     HealthModule,
+    LoggerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

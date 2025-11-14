@@ -9,22 +9,53 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
-import { CreateEmailNotificationDto } from './dto/create-email-notification.dto';
-import { CreatePushNotificationDto } from './dto/create-push-notification.dto';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
+import { CreateNotificationDto } from './dto/create-notification';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
+/**
+ * NotificationsController: API Gateway's front desk
+ *
+ * Responsibilities:
+ * 1. Validate incoming notification requests
+ * 2. Route to appropriate queue (email or push)
+ * 3. Track notification status
+ * 4. Provide status lookup endpoints
+ */
+
+@ApiTags('notifications')
 @Controller('notifications')
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  @Post('email')
+  /**
+   * POST /api/v1/notifications/
+   *
+   * Unified endpoint for all notification types (email and push)
+   *
+   * Flow:
+   * 1. Validate request (authentication, DTO validation)
+   * 2. Check idempotency (prevent duplicate sends)
+   * 3. Fetch user contact info from User Service
+   * 4. Route to appropriate queue based on notification_type
+   * 5. Return tracking ID for status lookup
+   *
+   * Returns: 202 Accepted (async processing)
+   */
+  @Post()
   @HttpCode(HttpStatus.ACCEPTED)
-  async createEmailNotification(@Body() dto: CreateEmailNotificationDto) {
-    const result = await this.notificationsService.createEmailNotification(dto);
+  @ApiOperation({
+    summary: 'Create notification',
+    description:
+      'Unified endpoint to create email or push notifications. The notification will be queued for async processing.',
+  })
+  async createNotification(@Body() dto: CreateNotificationDto) {
+    const result = await this.notificationsService.createNotification(dto);
+
     return {
       success: true,
       data: result,
-      message: 'Email notification queued successfully',
+      message: `${dto.notification_type} notification queued successfully`,
       meta: {
         total: 1,
         limit: 1,
@@ -36,26 +67,24 @@ export class NotificationsController {
     };
   }
 
-  @Post('push')
-  @HttpCode(HttpStatus.ACCEPTED)
-  async createPushNotification(@Body() dto: CreatePushNotificationDto) {
-    const result = await this.notificationsService.createPushNotification(dto);
-    return {
-      success: true,
-      data: result,
-      message: 'Push notification queued successfully',
-      meta: {
-        total: 1,
-        limit: 1,
-        page: 1,
-        total_pages: 1,
-        has_next: false,
-        has_previous: false,
-      },
-    };
-  }
+  /**
+   * GET /api/v1/notifications/:id
+   *
+   * Get notification status by tracking ID
+   *
+   * Possible statuses:
+   * - pending: Queued, waiting for processing
+   * - processing: Currently being sent
+   * - sent: Successfully sent
+   * - delivered: Confirmed delivery (email opened, push received)
+   * - failed: Permanent failure (moved to dead-letter queue)
+   */
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get notification status',
+    description: 'Retrieve the status of a notification by its tracking ID',
+  })
   async getNotificationStatus(@Param('id') id: string) {
     const notification =
       await this.notificationsService.getNotificationStatus(id);
@@ -91,7 +120,23 @@ export class NotificationsController {
     };
   }
 
+  /**
+   * GET /api/v1/notifications/
+   *
+   * List notifications with filtering and pagination
+   *
+   * Query params:
+   * - page: Page number (default: 1)
+   * - limit: Items per page (default: 10)
+   * - status: Filter by status (optional)
+   * - type: Filter by notification type (optional)
+   */
   @Get()
+  @ApiOperation({
+    summary: 'List notifications',
+    description:
+      'Retrieve a paginated list of notifications with optional filtering by status and type',
+  })
   async listNotifications(@Query() query: QueryNotificationsDto) {
     const result = await this.notificationsService.listNotifications(
       query.page,

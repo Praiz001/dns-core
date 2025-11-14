@@ -9,6 +9,7 @@ import {
 import { QueueService } from '../queue/queue.service';
 import { IdempotencyService } from '../idempotency/idempotency.service';
 import { DataSource } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('health')
 export class HealthController {
@@ -19,31 +20,51 @@ export class HealthController {
     private queueService: QueueService,
     private idempotencyService: IdempotencyService,
     private dataSource: DataSource,
+    private configService: ConfigService,
   ) {}
 
   @Get()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   @HealthCheck()
+  // check() {
+  //   return this.health.check([
+  //     // Database health check
+  //     () => this.checkDatabase(),
+  //     // RabbitMQ health check
+  //     () => this.checkRabbitMQ(),
+  //     // Redis health check
+  //     () => this.checkRedis(),
+  //     // Memory health check
+
+  //     () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024), // 300MB threshold
+  //     // Disk health check
+
+  //     () =>
+  //       this.disk.checkStorage('disk', {
+  //         path: '/',
+  //         thresholdPercent: 0.9, // 90% threshold
+  //       }),
+  //   ]);
+  // }
   check() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    return this.health.check([
-      // Database health check
+    const checks: Array<() => Promise<HealthIndicatorResult>> = [
       () => this.checkDatabase(),
-      // RabbitMQ health check
       () => this.checkRabbitMQ(),
-      // Redis health check
       () => this.checkRedis(),
-      // Memory health check
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024), // 300MB threshold
-      // Disk health check
-      () =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
+    ];
+
+    // Only add disk check in production
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+    if (nodeEnv === 'production') {
+      checks.push(() =>
         this.disk.checkStorage('disk', {
           path: '/',
-          thresholdPercent: 0.9, // 90% threshold
+          thresholdPercent: 0.9,
         }),
-    ]);
+      );
+    }
+
+    return this.health.check(checks);
   }
 
   private async checkDatabase(): Promise<HealthIndicatorResult> {

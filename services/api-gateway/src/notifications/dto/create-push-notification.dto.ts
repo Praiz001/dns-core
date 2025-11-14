@@ -17,6 +17,11 @@ class PushRecipientDto {
   user_id?: string;
 }
 
+/**
+ * @deprecated Use CreatePushNotificationDto instead
+ * This DTO will be removed soon
+ */
+
 export class CreatePushNotificationDto {
   @IsString()
   title: string;

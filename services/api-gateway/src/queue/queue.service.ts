@@ -1,4 +1,3 @@
-// services/api-gateway/src/queue/queue.service.ts
 import {
   Injectable,
   OnModuleInit,
@@ -70,61 +69,27 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // private async setupQueues() {
-  //   try {
-  //     // Setup email queue with dead-letter queue
-  //     await this.channel.assertQueue(this.config.email_queue, {
-  //       durable: true,
-  //       arguments: {
-  //         'x-dead-letter-exchange': this.config.exchange,
-  //         'x-dead-letter-routing-key': this.config.failed_queue,
-  //       },
-  //     });
-  //     await this.channel.bindQueue(
-  //       this.config.email_queue,
-  //       this.config.exchange,
-  //       'email',
-  //     );
-
-  //     // Setup push queue with dead-letter queue
-  //     await this.channel.assertQueue(this.config.push_queue, {
-  //       durable: true,
-  //       arguments: {
-  //         'x-dead-letter-exchange': this.config.exchange,
-  //         'x-dead-letter-routing-key': this.config.failed_queue,
-  //       },
-  //     });
-  //     await this.channel.bindQueue(
-  //       this.config.push_queue,
-  //       this.config.exchange,
-  //       'push',
-  //     );
-
-  //     // Setup failed queue (dead-letter queue)
-  //     await this.channel.assertQueue(this.config.failed_queue, {
-  //       durable: true,
-  //     });
-  //     await this.channel.bindQueue(
-  //       this.config.failed_queue,
-  //       this.config.exchange,
-  //       'failed',
-  //     );
-
-  //     this.logger.log('Queues and exchange setup completed');
-  //   } catch (error) {
-  //     this.logger.error('Failed to setup queues', error);
-  //     throw error;
-  //   }
-  // }
-
   private async setupQueuesOnChannel(channel: amqp.Channel) {
     try {
-      // Setup email queue with dead-letter queue
+      // Assert main exchange
+      await channel.assertExchange(this.config.exchange, 'direct', {
+        durable: true,
+      });
+
+      // Assert dead-letter exchange
+      await channel.assertExchange(this.config.dlx_exchange, 'direct', {
+        durable: true,
+      });
+
+      // Setup email queue with dead-letter queue AND priority support
       await channel.assertQueue(this.config.email_queue, {
         durable: true,
         arguments: {
-          'x-dead-letter-exchange': this.config.exchange,
-          'x-dead-letter-routing-key': this.config.failed_queue,
+          // 'x-dead-letter-exchange': this.config.exchange,
+          // 'x-dead-letter-routing-key': this.config.failed_queue,
+          'x-dead-letter-exchange': this.config.dlx_exchange,
+          'x-dead-letter-routing-key': 'failed',
+          'x-max-priority': 10,
         },
       });
       await channel.bindQueue(
@@ -133,12 +98,15 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         'email',
       );
 
-      // Setup push queue with dead-letter queue
+      // Setup push queue with dead-letter queue AND priority support
       await channel.assertQueue(this.config.push_queue, {
         durable: true,
         arguments: {
-          'x-dead-letter-exchange': this.config.exchange,
-          'x-dead-letter-routing-key': this.config.failed_queue,
+          // 'x-dead-letter-exchange': this.config.exchange,
+          // 'x-dead-letter-routing-key': this.config.failed_queue,
+          'x-dead-letter-exchange': this.config.dlx_exchange,
+          'x-dead-letter-routing-key': 'failed',
+          'x-max-priority': 10,
         },
       });
       await channel.bindQueue(
@@ -146,13 +114,15 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         this.config.exchange,
         'push',
       );
+
       // Setup failed queue (dead-letter queue)
       await channel.assertQueue(this.config.failed_queue, {
         durable: true,
       });
       await channel.bindQueue(
         this.config.failed_queue,
-        this.config.exchange,
+        // this.config.exchange,
+        this.config.dlx_exchange,
         'failed',
       );
 
@@ -163,12 +133,29 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publishToEmailQueue(message: {
-    request_id?: string;
-    [key: string]: unknown;
-  }): Promise<boolean> {
+  /**
+   * publishToEmailQueue: Send message to email queue
+   *
+   * @param message - Notification payload
+   * @param priority - Optional priority (1-10, default 5)
+   *                   Higher priority messages are processed first
+   * @returns true if published successfully
+   */
+
+  async publishToEmailQueue(
+    message: {
+      request_id?: string;
+      priority?: number;
+      [key: string]: unknown;
+    },
+    priority?: number,
+  ): Promise<boolean> {
     try {
       const messageBuffer = Buffer.from(JSON.stringify(message));
+
+      // Use priority from message or parameter (default to 5)
+      const messagePriority = priority || message.priority || 5;
+
       const published = await this.channel.publish(
         this.config.exchange,
         'email',
@@ -177,12 +164,12 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
           persistent: true,
           messageId: message.request_id || this.generateMessageId(),
           timestamp: Date.now(),
+          priority: messagePriority,
         },
       );
-
       if (published) {
         this.logger.log(
-          `Message published to email queue: ${message.request_id || 'unknown'}`,
+          `Message published to email queue (priority ${messagePriority}): ${message.request_id || 'unknown'}`,
         );
         return true;
       } else {
@@ -195,13 +182,36 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publishToPushQueue(message: {
-    request_id?: string;
-    [key: string]: unknown;
-  }): Promise<boolean> {
+  /**
+   * publishToPushQueue: Send message to push queue
+   *
+   * @param message - Notification payload
+   * @param priority - Optional priority (1-10, default 5)
+   *                   Higher priority messages are processed first
+   * @returns true if published successfully
+   */
+
+  async publishToPushQueue(
+    message: {
+      request_id?: string;
+      priority?: number;
+      [key: string]: unknown;
+    },
+    priority?: number,
+  ): Promise<boolean> {
     try {
+      // Check if connected before attempting to publish
+      if (!this.isConnected()) {
+        this.logger.error('RabbitMQ not connected, cannot publish message');
+        return false;
+      }
+
       const messageBuffer = Buffer.from(JSON.stringify(message));
-      const published = await this.channel.publish(
+      // Use priority from message or parameter (default to 5)
+      const messagePriority = priority || message.priority || 5;
+
+      // Add timeout to prevent indefinite hanging
+      const publishPromise = this.channel.publish(
         this.config.exchange,
         'push',
         messageBuffer,
@@ -209,12 +219,33 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
           persistent: true,
           messageId: message.request_id || this.generateMessageId(),
           timestamp: Date.now(),
+          priority: messagePriority,
         },
       );
 
+      // Wait max 5 seconds for publish
+      const timeoutPromise = new Promise<boolean>((_, reject) =>
+        setTimeout(() => reject(new Error('Publish timeout after 5s')), 5000),
+      );
+
+      const published = await Promise.race([publishPromise, timeoutPromise]);
+
+      // const published = await this.channel.publish(
+      //   this.config.exchange,
+      //   'push',
+      //   messageBuffer,
+      //   {
+      //     persistent: true,
+      //     messageId: message.request_id || this.generateMessageId(),
+      //     timestamp: Date.now(),
+      //     // ADD: Set message priority
+      //     priority: messagePriority,
+      //   },
+      // );
+
       if (published) {
         this.logger.log(
-          `Message published to push queue: ${message.request_id || 'unknown'}`,
+          `Message published to push queue (priority ${messagePriority}): ${message.request_id || 'unknown'}`,
         );
         return true;
       } else {
@@ -223,7 +254,8 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       }
     } catch (error) {
       this.logger.error('Failed to publish to push queue', error);
-      throw error;
+      return false;
+      // throw error;
     }
   }
 
@@ -232,6 +264,6 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   isConnected(): boolean {
-    return !!(this.connection && this.channel);
+    return !!(this.connection && this.channel && this.connection.isConnected());
   }
 }

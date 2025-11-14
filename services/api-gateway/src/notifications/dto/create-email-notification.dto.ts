@@ -17,6 +17,11 @@ class EmailRecipientDto {
   name?: string;
 }
 
+/**
+ * @deprecated Use CreateNotificationDto instead
+ * This DTO will be removed soon
+ */
+
 export class CreateEmailNotificationDto {
   @IsString()
   template_id: string;
