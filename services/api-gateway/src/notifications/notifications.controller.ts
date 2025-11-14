@@ -7,10 +7,12 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
-import { QueryNotificationsDto } from './dto/query-notifications.dto';
+import { QueryNotificationsDto, NotificationStatus } from './dto/query-notifications.dto';
 import { CreateNotificationDto } from './dto/create-notification';
+import { UpdateStatusDto, StatusEnum } from './dto/update-status.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
 /**
@@ -150,6 +152,68 @@ export class NotificationsController {
       data: result.data,
       message: 'Notifications retrieved successfully',
       meta: result.meta,
+    };
+  }
+
+  /**
+   * POST /api/v1/:notification_preference/status
+   * 
+   * Internal endpoint for Email/Push services to update notification status
+   * 
+   * Examples:
+   * - POST /api/v1/email/status
+   * - POST /api/v1/push/status
+   */
+  @Post(':notification_preference/status')
+  @ApiOperation({
+    summary: 'Update notification status',
+    description: 'Internal endpoint for Email/Push services to update notification status after processing',
+  })
+  async updateNotificationStatus(
+    @Param('notification_preference') notificationPreference: string,
+    @Body() updateDto: UpdateStatusDto,
+  ) {
+    // Validate notification_preference
+    if (notificationPreference !== 'email' && notificationPreference !== 'push') {
+      throw new BadRequestException(
+        `Invalid notification_preference. Must be 'email' or 'push'`,
+      );
+    }
+
+    // Map status strings to NotificationStatus enum
+    let status: NotificationStatus;
+    switch (updateDto.status) {
+      case StatusEnum.DELIVERED:
+        status = NotificationStatus.SENT;
+        break;
+      case StatusEnum.FAILED:
+        status = NotificationStatus.FAILED;
+        break;
+      case StatusEnum.PENDING:
+        status = NotificationStatus.PENDING;
+        break;
+      default:
+        status = NotificationStatus.PENDING;
+    }
+
+    await this.notificationsService.updateNotificationStatus(
+      updateDto.notification_id,
+      status,
+      updateDto.error,
+    );
+
+    return {
+      success: true,
+      message: 'Notification status updated',
+      data: null,
+      meta: {
+        total: 1,
+        limit: 1,
+        page: 1,
+        total_pages: 1,
+        has_next: false,
+        has_previous: false,
+      },
     };
   }
 }

@@ -204,11 +204,17 @@ class ExternalAPIClient:
         """
         try:
             async def update_status():
-                url = f"{self.api_gateway_url}/internal/notifications/{notification_id}"
-                payload = status_update.model_dump(exclude_none=True)
+                # Use the task-specified endpoint format: POST /api/v1/{notification_preference}/status/
+                url = f"{self.api_gateway_url}/api/v1/email/status"
+                payload = {
+                    "notification_id": str(notification_id),
+                    "status": status_update.status,
+                    "timestamp": status_update.sent_at.isoformat() if status_update.sent_at else None,
+                    "error": status_update.error_message
+                }
                 
                 async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    response = await client.patch(url, json=payload)
+                    response = await client.post(url, json=payload)
                     response.raise_for_status()
                     return True
             

@@ -266,12 +266,31 @@ class EmailService:
         provider_message_id: Optional[str] = None,
         error: Optional[str] = None
     ):
-        """Update notification status in API Gateway."""
+        """
+        Update notification status in API Gateway.
+        
+        Maps internal statuses to task-specified enum values:
+        - sent -> delivered
+        - failed -> failed
+        - pending/skipped -> pending
+        """
+        # Map internal status to task enum (delivered, pending, failed)
+        status_mapping = {
+            "sent": "delivered",
+            "delivered": "delivered",
+            "failed": "failed",
+            "pending": "pending",
+            "skipped": "pending",
+            "bounced": "failed"
+        }
+        
+        gateway_status = status_mapping.get(status, "pending")
+        
         status_update = NotificationStatusUpdate(
             channel="email",
-            status=status,
+            status=gateway_status,
             provider_message_id=provider_message_id,
-            sent_at=datetime.utcnow() if status == "sent" else None,
+            sent_at=datetime.utcnow() if gateway_status == "delivered" else None,
             error_message=error
         )
         
