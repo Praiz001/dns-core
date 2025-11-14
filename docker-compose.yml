@@ -23,7 +23,7 @@ services:
     env_file:
     - ./services/user-service/.env
     depends_on:
-      - postgres
+      - postgres-user
       - redis
       - rabbitmq
     networks:
@@ -75,13 +75,27 @@ services:
     image: postgres:15
     container_name: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: notification_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - dns_net
+
+  postgres-user:
+    image: postgres:15
+    container_name: postgres-user
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${USER_DB_NAME}
+    volumes:
+      - pgdata-user:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
     networks:
       - dns_net
 
@@ -108,3 +122,4 @@ networks:
 
 volumes:
   pgdata:
+  pgdata-user:
