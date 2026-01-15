@@ -2,6 +2,7 @@
 from fastapi import APIRouter, status
 from datetime import datetime
 import aio_pika
+from sqlalchemy import text
 
 from app.config import settings
 from app.schemas.push import HealthResponse
@@ -21,7 +22,7 @@ async def health_check():
     # Check database
     try:
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         dependencies["database"] = "healthy"
     except Exception as e:
         logger.error(f"Database health check failed: {str(e)}")
