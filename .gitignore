@@ -70,7 +70,6 @@ profile_default/
 ipython_config.py
 
 # IDEs and editors
-.vscode/
 .vscode-test/
 .idea/
 *.sublime-project
@@ -107,8 +106,6 @@ logs/
 *.pid.lock
 
 # Environment and secrets
-.env
-.env.local
 .env.*.local
 .envrc
 .local.env
@@ -234,3 +231,4 @@ uv.lock
 temp_auto_push.bat
 temp_interactive_push.bat
 branch_structure.json
+config.bat
